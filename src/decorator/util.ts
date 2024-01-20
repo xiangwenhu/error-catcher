@@ -5,14 +5,12 @@ import isAsyncFunction from "../util/isAsyncFunction";
 export function executeCall({
     method,
     config,
-    proxyObject,
     logger,
     args,
     thisObject,
 }: {
     method: Function;
     config: CatchConfig;
-    proxyObject: Object;
     logger: Logger;
     args: IArguments | any[];
     thisObject: any;
@@ -22,6 +20,11 @@ export function executeCall({
         config.handler && config.handler({
             error,
             func: method,
+            params: args,
+            businessType: config.businessType,
+            extra: config.extra,
+            ctx: config.ctx,
+            throw: config.throw,
         });
         if (!!config.throw) {
             throw error
