@@ -28,7 +28,9 @@ export interface ErrorHandlerParams<E = any, C = any, P = any[]> {
      * 额外的信息
      */
     extra?: any;
-
+    /**
+     * 白名单，装饰class的时候可配置
+     */
     whiteList?: (PropertyKey | RegExp)[];
 }
 

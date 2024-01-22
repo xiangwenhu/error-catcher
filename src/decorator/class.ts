@@ -43,7 +43,7 @@ function autoCatchMethods(
 
     // 实例方法
     function proxyInstanceMethods(instance: any) {
-        const proto = Object.getPrototypeOf(instance.__proto__)
+        const proto = Object.getPrototypeOf(instance.constructor.prototype)
         Reflect.ownKeys(proto).filter(name => {
             return METHOD_WHITELIST.indexOf(name) == -1 && typeof proto[name] === 'function'
         }).forEach(name => {

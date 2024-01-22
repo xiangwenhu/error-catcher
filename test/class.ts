@@ -18,25 +18,13 @@ class TestClass {
 
     public static staticName: string = 'staticName';
 
-
-    @methodDecorator({
-        handler(params) {
-            console.log("staticMethod handler:", params.func?.name);
-        }
-    })
     static staticMethod() {
         console.log('this === TestClass:', this === TestClass);
         console.log("staticName:", this.staticName);
         throw new Error("test staticMethod error");
     }
 
-   
-    @methodDecorator({
-        handler(params) {
-            console.log("testMethod handler:", params.func?.name);
-        }
-    })
-    testMethod(data: any) {
+   testMethod(data: any) {
         console.log("this.name", this.name);
         throw new Error("test error");
     }

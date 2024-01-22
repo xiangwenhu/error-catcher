@@ -11,7 +11,6 @@ export interface StorageMapValue {
     staticMethods?: Map<Function, StorageMapValue.MethodConfigValue>;
 }
 
-
 export namespace StorageMapValue {
     export type ConfigValue = Partial<CatchConfig>;
     export type MethodsMap = Map<Function, MethodConfigValue>;
