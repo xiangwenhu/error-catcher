@@ -1,4 +1,4 @@
-import { CatchConfig } from "../types/errorCatch";
+import { CatchConfig, ClassCatchConfig } from "../types/errorCatch";
 import Logger from "../types/logger";
 import isAsyncFunction from "../util/isAsyncFunction";
 
@@ -10,7 +10,7 @@ export function executeCall({
     thisObject,
 }: {
     method: Function;
-    config: CatchConfig;
+    config: CatchConfig | ClassCatchConfig;
     logger: Logger;
     args: IArguments | any[];
     thisObject: any;
@@ -25,6 +25,7 @@ export function executeCall({
             extra: config.extra,
             ctx: config.ctx,
             throw: config.throw,
+            whiteList: (config as ClassCatchConfig).whiteList
         });
         if (!!config.throw) {
             throw error
@@ -42,3 +43,7 @@ export function executeCall({
     }
 }
 
+
+export function checkIsInWhitelist(propertyKey: PropertyKey, whitelist:  (PropertyKey | RegExp)[]){
+    return whitelist.some(item => item instanceof RegExp ? item.test(String(propertyKey)) : propertyKey === item) // 检查是否在白名单中
+}

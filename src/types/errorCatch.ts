@@ -28,10 +28,12 @@ export interface ErrorHandlerParams<E = any, C = any, P = any[]> {
      * 额外的信息
      */
     extra?: any;
+
+    whiteList?: (PropertyKey | RegExp)[];
 }
 
 export interface CatchConfig {
-    filter?:  PropertyKey | PropertyKey[] | ((params: Pick<ErrorHandlerParams, "ctx" | "params" | "func">) => boolean);
+    // filter?: (params: Pick<ErrorHandlerParams, "ctx" | "params" | "func" | 'whiteList'>) => boolean;
     message?: string | ((params: ErrorHandlerParams) => string);
     throw?: boolean;
     handler?: (params: ErrorHandlerParams) => void;
@@ -41,10 +43,11 @@ export interface CatchConfig {
 }
 
 
+
 export interface ClassCatchConfig extends CatchConfig {
-    whiteList?: PropertyKey[];
+    whiteList?: (PropertyKey | RegExp)[];
     /**
      * 自动catch静态方法和实例方法
      */
-    auto?: boolean
+    autoCatchMethods?: boolean
 }
