@@ -8,6 +8,7 @@ import {
     CreateDecoratorOptions,
     CatchRootConfig,
 } from "./types";
+import { CatchConfig } from "./types/errorCatch";
 import {
     getProperty,
     isAsyncFunction,
@@ -59,15 +60,15 @@ export default function createInstance(config: CatchRootConfig = {}) {
          * accessor装饰器
          */
         // accessorDecorator: createAccessorDecorator(options),
+
         /**
          * 更新配置，用户动态设置授权信息等，例如jwt
          * @param config
          * @returns
          */
-        /**
-         * 设置request实例
-         * @param request
-         */
+        setConfig: (config: CatchConfig) => {
+            defaultsValue = merge([defaultsValue, config || {}])
+        },
         /**
          * 自定义装饰器
          * @param creator

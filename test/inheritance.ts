@@ -1,11 +1,20 @@
-import { classDecorator } from "../src";
+import { classDecorator, methodDecorator, setConfig } from "../src";
+
+
+setConfig({
+    handler(params) {
+        console.log('custom error handler');
+    }
+})
+
 
 @classDecorator({
-    autoCatchMethods: true
+    autoCatchMethods: true,
+    throw: true
 })
 class SuperClass {
 
-    private methodName =  'methodName';
+    private methodName = 'methodName';
     static staticMethodName = 'staticMethodName';
 
     superMethod() {
@@ -13,7 +22,10 @@ class SuperClass {
         throw new Error('superMethod');
     }
 
-
+    @methodDecorator({
+        throw: false,
+        handler() { console.log('methodDecorator handler'); }
+    })
     static superStaticMethod() {
         console.log('superStaticMethod methodName', this.staticMethodName);
         throw new Error('superStaticMethod');
@@ -27,7 +39,7 @@ class SuperClass {
 })
 class SubClass extends SuperClass {
 
-    private subMethodName =  'methodName';
+    private subMethodName = 'methodName';
     static subStaticMethodName = 'staticMethodName';
 
     subMethod() {
@@ -45,7 +57,11 @@ class SubClass extends SuperClass {
 
 // new SubClass().superMethod();
 
+try {
+    SubClass.superStaticMethod();
+    // SubClass.subStaticMethod();
 
-SubClass.superStaticMethod();
-SubClass.subStaticMethod();
+} catch (err: any) {
+    console.log('SubClass.superStaticMethod: error', err && err.message);
+}
 
