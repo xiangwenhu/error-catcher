@@ -10,7 +10,7 @@ const { classDecorator, methodDecorator } = createInstance({
 
 @classDecorator({
     autoCatchMethods: true,
-    whiteList: ['staticMethod']
+    // whiteList: ['staticMethod']
 })
 class TestClass {
 
@@ -33,4 +33,4 @@ class TestClass {
 
 (new TestClass()).testMethod({ name: "test" });
 console.log("----------------------------------")
-TestClass.staticMethod();
+// TestClass.staticMethod();

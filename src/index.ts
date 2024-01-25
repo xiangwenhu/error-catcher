@@ -6,7 +6,15 @@ export {
 export * from "./types";
 
 // 默认实例导出
-const instance = createInstance();
+const instance = createInstance({
+    enableLog: false,
+    defaults: {
+        handler(params){
+            console.log('error is caught');
+            console.log(`${params.func?.name} error:`, params.error);
+        }
+    }
+});
 export const classDecorator = instance.classDecorator;
 export const createDecorator = instance.createDecorator;
 // export const fieldDecorator = instance.fieldDecorator;

@@ -44,6 +44,22 @@ export function executeCall({
 }
 
 
-export function checkIsInWhitelist(propertyKey: PropertyKey, whitelist:  (PropertyKey | RegExp)[]){
-    return whitelist.some(item => item instanceof RegExp ? item.test(String(propertyKey)) : propertyKey === item) // 检查是否在白名单中
+export function checkIsInWhitelist(propertyKey: PropertyKey, whitelist: (PropertyKey | RegExp)[]) {
+    return whitelist.some(item => {
+        if (typeof item === "symbol") {
+            return propertyKey === item
+        }
+        if (item instanceof RegExp) {
+            return item.test(String(propertyKey))
+        }
+        return propertyKey === item
+    })
+}
+
+export function geOriginalPrototype(instance: Object, targetClass: Function) {
+    return targetClass.prototype;
+    // let proto: Function | null = instance.constructor;
+    // while ((proto = Object.getPrototypeOf(proto)) != null) {
+    //     if (proto === targetClass) return proto.prototype;
+    // }
 }

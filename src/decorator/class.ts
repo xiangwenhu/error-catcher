@@ -1,8 +1,8 @@
-import { DEFAULT_CONFIG, METHOD_WHITELIST } from "../const";
+import { DEFAULT_CONFIG, METHOD_WHITELIST, SYMBOL_CLASS_BY_PROXY_FLAG } from "../const";
 import { CreateDecoratorOptions } from "../types";
 import { ClassCatchConfig } from '../types/errorCatch';
 import { tryProxyMethod } from "./method";
-import { checkIsInWhitelist } from "./util";
+import { checkIsInWhitelist, geOriginalPrototype } from "./util";
 
 function autoCatchMethods(
     OriClass: any,
@@ -12,10 +12,15 @@ function autoCatchMethods(
 ) {
     const { dataStore, logger } = creatorOptions;
 
+    OriClass[SYMBOL_CLASS_BY_PROXY_FLAG] = true;
+
     class NewClass extends OriClass {
-        constructor(...args: any) {
+        constructor(...args: any[]) {
             super(...args);
-            proxyInstanceMethods(this);
+            // 调用的时候this为实例，方法是原型上的方法
+            const instance = this;
+            const proto = geOriginalPrototype(instance, OriClass);
+            proxyInstanceMethods(instance, proto);
         }
     }
 
@@ -23,7 +28,7 @@ function autoCatchMethods(
     // target: class
     // context: demo '{"kind":"class","name":"Class的Name"}'
     logger.log("classDecorator:", OriClass.name);
-
+    const whiteList = METHOD_WHITELIST.concat(... (config.whiteList || []))
 
     // 静态方法 代理， 代理的是原Class的方法，传递的thisObject是NewClass
     const thisObject = NewClass;
@@ -31,7 +36,7 @@ function autoCatchMethods(
         dataStore.updateClassConfig(NewClass, config);
         // 静态方法
         Reflect.ownKeys(OriClass).filter(name => {
-            const isInWhitelist = Array.isArray(config.whiteList) ? checkIsInWhitelist(name, config.whiteList) : true;
+            const isInWhitelist = checkIsInWhitelist(name, whiteList);
             return !isInWhitelist && typeof OriClass[name] === 'function'
         }).forEach(name => {
             const method = OriClass[name] as Function;
@@ -42,10 +47,10 @@ function autoCatchMethods(
     });
 
     // 实例方法
-    function proxyInstanceMethods(instance: any) {
-        const proto = Object.getPrototypeOf(instance.constructor.prototype)
+    function proxyInstanceMethods(instance: any, proto: any) {
         Reflect.ownKeys(proto).filter(name => {
-            return METHOD_WHITELIST.indexOf(name) == -1 && typeof proto[name] === 'function'
+            const isInWhitelist = checkIsInWhitelist(name, whiteList);
+            return !isInWhitelist && typeof proto[name] === 'function'
         }).forEach(name => {
             const method = proto[name] as Function;
             tryProxyMethod(method, name, instance, creatorOptions, () => {
@@ -78,6 +83,7 @@ export function createClassDecorator(creatorOptions: CreateDecoratorOptions) {
 
             // 自动捕获 实例方法  和 静态方法
             if (!!config.autoCatchMethods) {
+                //  通过Class的继承监听构造函数，会返回新的 Class
                 const NewClass = autoCatchMethods(target, context, creatorOptions, config)
                 return NewClass;
             } else {
