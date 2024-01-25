@@ -11,7 +11,6 @@ export interface StorageMapValue {
     staticMethods?: Map<Function, StorageMapValue.MethodConfigValue>;
 }
 
-
 export namespace StorageMapValue {
     export type ConfigValue = Partial<CatchConfig>;
     export type MethodsMap = Map<Function, MethodConfigValue>;
@@ -48,6 +47,12 @@ export interface CatchRootConfig {
      * 日志对象
      */
     logger?: Logger;
+
+    /**
+     * 非链式的只会触发一个处理函数，所有配置是最后merge的配置
+     * 链式， 多级的装饰都会被处理： 暂未实现
+     */
+    chain?: boolean;
 }
 
 export interface CreateDecoratorOptions {

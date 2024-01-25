@@ -1,18 +1,16 @@
-import { CatchConfig } from "../types/errorCatch";
+import { CatchConfig, ClassCatchConfig } from "../types/errorCatch";
 import Logger from "../types/logger";
 import isAsyncFunction from "../util/isAsyncFunction";
 
 export function executeCall({
     method,
     config,
-    proxyObject,
     logger,
     args,
     thisObject,
 }: {
     method: Function;
-    config: CatchConfig;
-    proxyObject: Object;
+    config: CatchConfig | ClassCatchConfig;
     logger: Logger;
     args: IArguments | any[];
     thisObject: any;
@@ -22,6 +20,12 @@ export function executeCall({
         config.handler && config.handler({
             error,
             func: method,
+            params: args,
+            businessType: config.businessType,
+            extra: config.extra,
+            ctx: config.ctx,
+            throw: config.throw,
+            whiteList: (config as ClassCatchConfig).whiteList
         });
         if (!!config.throw) {
             throw error
@@ -39,3 +43,23 @@ export function executeCall({
     }
 }
 
+
+export function checkIsInWhitelist(propertyKey: PropertyKey, whitelist: (PropertyKey | RegExp)[]) {
+    return whitelist.some(item => {
+        if (typeof item === "symbol") {
+            return propertyKey === item
+        }
+        if (item instanceof RegExp) {
+            return item.test(String(propertyKey))
+        }
+        return propertyKey === item
+    })
+}
+
+export function geOriginalPrototype(instance: Object, targetClass: Function) {
+    return targetClass.prototype;
+    // let proto: Function | null = instance.constructor;
+    // while ((proto = Object.getPrototypeOf(proto)) != null) {
+    //     if (proto === targetClass) return proto.prototype;
+    // }
+}
