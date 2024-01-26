@@ -3,20 +3,20 @@ import { InferType } from "../types";
 const toString = Object.prototype.toString;
 const hasOwnProp = Object.prototype.hasOwnProperty;
 
-export function isType(obj: any, type: string) {
+export function isObjectType(obj: any, type: string) {
     return toString.call(obj) === `[object ${type}]`;
 }
 
 export function isFunction(obj: any) {
-    return typeof obj === "function" || isType(obj, "Function");
+    return typeof obj === "function";
 }
 
 export function isAsyncFunction(obj: any) {
-    return isType(obj, "AsyncFunction");
+    return isObjectType(obj, "AsyncFunction");
 }
 
 export function isObject(obj: any) {
-    return isType(obj, "Object");
+    return typeof obj === 'object' && obj !== null;
 }
 
 export function getOwnProperty(
@@ -59,3 +59,7 @@ export function cloneJSON<T>(obj: T, defaultValue = {} as any as InferType<T>): 
     }
 }
 
+
+
+export const isThenable = (thing: any) =>
+    thing && (isObject(thing) || isFunction(thing)) && isFunction(thing.then) && isFunction(thing.catch);

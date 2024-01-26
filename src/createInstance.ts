@@ -11,8 +11,6 @@ import {
 import { CatchConfig } from "./types/errorCatch";
 import {
     getProperty,
-    isAsyncFunction,
-    isFunction,
 } from "./util";
 
 

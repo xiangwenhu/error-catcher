@@ -1,5 +1,6 @@
 import { CatchConfig, ClassCatchConfig } from "../types/errorCatch";
 import Logger from "../types/logger";
+import { isThenable } from "../util";
 import isAsyncFunction from "../util/isAsyncFunction";
 
 export function executeCall({
@@ -32,11 +33,19 @@ export function executeCall({
         }
     }
 
+    // TODO::这里是存在问题的，async function 函数可能会被转为低版本的代码
     if (isAsyncFunction(method)) {
         return method.apply(thisObject, args).catch(errorHandler)
     } else {
         try {
-            return method.apply(thisObject, args)
+            // 先调用函数， 如果直接被后面的catch了，是普通函数
+            const result = method.apply(thisObject, args);
+            // 返回的结果如果是 isThenable ，就是异步函数
+            const isThenableResult = isThenable(result)
+            if (isThenableResult) {
+                return result.catch(errorHandler)
+            }
+            return result;
         } catch (err) {
             errorHandler(err)
         }
