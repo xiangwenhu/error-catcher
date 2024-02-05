@@ -85,7 +85,7 @@ export default class DataStore {
     getMethodMergedConfig(
         instanceOrClass: Object,
         method: Function,
-        defaultConfig: CatchConfig = {},
+        defaultConfig: StorageMapValue.ConfigValue = {},
         argumentsObj: any
     ) {
         if (
@@ -99,7 +99,7 @@ export default class DataStore {
         }
         const mountConfigs = this.getMountConfigs(instanceOrClass, method);
 
-        let mConfig: CatchConfig = merge([
+        let mConfig: StorageMapValue.ConfigValue = merge([
             {},
             // 自定义默认config
             defaultConfig,
@@ -113,12 +113,26 @@ export default class DataStore {
             mountConfigs.methodConfig.config || {},
         ]);
 
+
         mConfig = this.adjustConfig(
             mConfig,
             argumentsObj,
             mountConfigs.methodConfig
         );
-        return mConfig;
+
+        const errorHandlers: Function[] = [defaultConfig,
+            mountConfigs.classConfig,
+            mountConfigs.methodConfig.config || {}
+        ].reverse().map(c=> {
+            if(!c) return undefined;
+            if(typeof c.handler === 'function') return c.handler;
+            return undefined;
+        }).filter(Boolean) as Function[]
+
+        return {
+            config: mConfig,
+            errorHandlers
+        };
     }
 
 
@@ -130,10 +144,10 @@ export default class DataStore {
      * @returns
      */
     private adjustConfig(
-        mergedConfig: CatchConfig,
+        mergedConfig: StorageMapValue.ConfigValue,
         argumentsObj: any,
         methodConfig: StorageMapValue.MethodConfigValue
-    ): CatchConfig {
+    ): StorageMapValue.ConfigValue {
 
         const {
             hasBody,

@@ -3,14 +3,22 @@ import { createInstance } from "../src/index"
 const { classDecorator, methodDecorator } = createInstance({
     defaults: {
         handler(params) {
-            console.log("error handler:", params.func?.name);
+            console.log(`default error handler:: function name : ${params.func?.name}, isStatic: ${params.isStatic}`);
+
         },
     }
 });
 
 @classDecorator({
     autoCatchMethods: true,
-    // whiteList: ['staticMethod']
+    // whiteList: ['staticMethod'],
+    throw: true,
+    chain: true,
+    handler(params) {
+        console.log(`classDecorator error handler:: function name : ${params.func?.name}, isStatic: ${params.isStatic}`);
+        // 返回 false ，表示停止冒泡
+        return false;
+    }
 })
 class TestClass {
 

@@ -40,7 +40,7 @@ export function tryProxyMethod(
         const { defaults, dataStore, logger } = creatorOptions;
 
         // 读取最终合并后的配置
-        const config = dataStore.getMethodMergedConfig(
+        const { config, errorHandlers } = dataStore.getMethodMergedConfig(
             thisObject,
             method,
             defaults,
@@ -56,7 +56,8 @@ export function tryProxyMethod(
             thisObject,
             method,
             config,
-            logger
+            logger,
+            errorHandlers: errorHandlers as any[]
         });
     }
 
@@ -104,7 +105,12 @@ function innerMethodDecorator(
                 )}`
             );
 
-            dataStore.updateMethodConfig(_class_, method, { config });
+            dataStore.updateMethodConfig(_class_, method, {
+                config: {
+                    ...config,
+                    isStatic: false,
+                }
+            });
         })
 
     });
@@ -131,7 +137,12 @@ function innerStaticMethodDecorator(
         );
 
         tryProxyMethod(method, context.name, _class_, creatorOptions, () => {
-            dataStore.updateStaticMethodConfig(_class_, method, { config });
+            dataStore.updateStaticMethodConfig(_class_, method, {
+                config: {
+                    ...config,
+                    isStatic: true,
+                }
+            });
         })
 
     });

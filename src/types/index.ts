@@ -1,6 +1,6 @@
 
 import { IDataStore } from "./dataStore.js";
-import { CatchConfig, ErrorHandlerParams } from "./errorCatch.js";
+import { CatchConfig, ClassCatchConfig, ErrorHandlerParams } from "./errorCatch.js";
 import Logger from "./logger";
 
 export interface StorageMapValue {
@@ -12,7 +12,9 @@ export interface StorageMapValue {
 }
 
 export namespace StorageMapValue {
-    export type ConfigValue = Partial<CatchConfig>;
+    export type ConfigValue = Partial< (CatchConfig | ClassCatchConfig) & {
+        isStatic: boolean
+    }>;
     export type MethodsMap = Map<Function, MethodConfigValue>;
     export type MethodConfigValue = {
         config?: ConfigValue;
@@ -47,12 +49,6 @@ export interface CatchRootConfig {
      * 日志对象
      */
     logger?: Logger;
-
-    /**
-     * 非链式的只会触发一个处理函数，所有配置是最后merge的配置
-     * 链式， 多级的装饰都会被处理： 暂未实现
-     */
-    chain?: boolean;
 }
 
 export interface CreateDecoratorOptions {

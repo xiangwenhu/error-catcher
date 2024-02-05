@@ -41,7 +41,9 @@ function autoCatchMethods(
         }).forEach(name => {
             const method = OriClass[name] as Function;
             tryProxyMethod(method, name, thisObject, creatorOptions, () => {
-                dataStore.updateStaticMethodConfig(NewClass, method, { config: {} });
+                dataStore.updateStaticMethodConfig(NewClass, method, { config: {
+                    isStatic: true
+                } });
             })
         })
     });
@@ -54,7 +56,9 @@ function autoCatchMethods(
         }).forEach(name => {
             const method = proto[name] as Function;
             tryProxyMethod(method, name, instance, creatorOptions, () => {
-                dataStore.updateMethodConfig(instance, method, { config: {} });
+                dataStore.updateMethodConfig(NewClass, method, { config: {
+                    isStatic: false
+                } });
             })
         })
     }
