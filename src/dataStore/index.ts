@@ -1,3 +1,4 @@
+import { SYMBOL_ORIGIN_FUNCTION, SYMBOL_RELATED_CLASS } from "../const";
 import { merge } from "../lib/merge";
 import { StorageMap, StorageMapValue } from "../types";
 import { CatchConfig } from "../types/errorCatch";
@@ -22,12 +23,26 @@ export default class DataStore {
     getMountConfigs(classOrInstance: Object | Function, method: Function) {
         // 如果instanceOrClass是class, 可以任务method是静态方法
         // 反之，是实例属性
-        const isStatic = isFunction(classOrInstance);
+        const isClass = isFunction(classOrInstance);
 
         const { storeMap } = this;
-        const _class_: Function = isStatic
+        let _class_: Function = isClass
             ? (classOrInstance as Function)
             : classOrInstance.constructor;
+
+        // SYMBOL_ORIGIN_FUNCTION
+        // TODO:: 继承之后的 非静态方法，classOrInstance 为 子类，而 method 信息在父类上
+        if (!isClass) {
+            for (let key of Reflect.ownKeys(classOrInstance)) {
+                // @ts-ignore
+                const val = classOrInstance[key];
+                if (isFunction(val) && val[SYMBOL_ORIGIN_FUNCTION] === method) {
+                    _class_ = val[SYMBOL_RELATED_CLASS];
+                    break;
+                }
+            }
+        }
+
         const rootConfig: StorageMapValue = storeMap.get(_class_) || {};
 
         // 挂载class身上的config
@@ -35,7 +50,7 @@ export default class DataStore {
 
         // 方法上的config
         const methodConfig =
-            ((isStatic ? rootConfig.staticMethods : rootConfig.methods) ||
+            ((isClass ? rootConfig.staticMethods : rootConfig.methods) ||
                 new Map<Function, StorageMapValue.MethodConfigValue>()).get(method) || {};
 
         // 实例或者class config 属性对应着的config
@@ -43,7 +58,7 @@ export default class DataStore {
 
         // fieldConfig
         let propertyMap: StorageMapValue.FieldPropertyMapValue;
-        if (isStatic) {
+        if (isClass) {
             const commonConfig = rootConfig.staticConfig || {};
             propertyMap = commonConfig.fieldPropertyMap || {};
         } else {
@@ -123,9 +138,9 @@ export default class DataStore {
         const errorHandlers: Function[] = [defaultConfig,
             mountConfigs.classConfig,
             mountConfigs.methodConfig.config || {}
-        ].reverse().map(c=> {
-            if(!c) return undefined;
-            if(typeof c.handler === 'function') return c.handler;
+        ].reverse().map(c => {
+            if (!c) return undefined;
+            if (typeof c.handler === 'function') return c.handler;
             return undefined;
         }).filter(Boolean) as Function[]
 

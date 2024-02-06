@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <script>
+
+        class TestClass {
+
+            name = 'name';
+
+            static staticName = 'staticName';
+
+            static staticMethod() {
+                console.log('this === TestClass:', this === TestClass);
+                console.log("staticName:", this.staticName);
+                throw new Error("test staticMethod error");
+            }
+
+            async testMethod(data) {
+                console.log("this.name", this.name);
+                throw new Error("test error");
+            }
+        }
+
+
+        // 同步错误
+        window.onerror = function (event, source, lineno, colno, error) {
+            console.log("onerror", event, source, lineno, colno, error)
+        }
+        // 同步错误
+        window.addEventListener("error", ev => {
+            console.log("error:", ev);
+        })
+
+        // 异步未处理的错误
+        window.addEventListener("unhandledrejection", ev => {
+            console.log("unhandledrejection:", ev);
+        })
+
+        TestClass.staticMethod();
+        new TestClass().testMethod(1);
+
+    </script>
+
+</body>
+
+</html>

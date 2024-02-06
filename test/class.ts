@@ -11,9 +11,6 @@ const { classDecorator, methodDecorator } = createInstance({
 
 @classDecorator({
     autoCatchMethods: true,
-    // whiteList: ['staticMethod'],
-    throw: true,
-    chain: true,
     handler(params) {
         console.log(`classDecorator error handler:: function name : ${params.func?.name}, isStatic: ${params.isStatic}`);
         // 返回 false ，表示停止冒泡
@@ -32,7 +29,7 @@ class TestClass {
         throw new Error("test staticMethod error");
     }
 
-   testMethod(data: any) {
+    async testMethod(data: any) {
         console.log("this.name", this.name);
         throw new Error("test error");
     }
@@ -41,4 +38,4 @@ class TestClass {
 
 (new TestClass()).testMethod({ name: "test" });
 console.log("----------------------------------")
-// TestClass.staticMethod();
+TestClass.staticMethod();

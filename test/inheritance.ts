@@ -1,16 +1,14 @@
 import { classDecorator, methodDecorator, setConfig } from "../src";
 
-
 setConfig({
     handler(params) {
-        console.log('custom error handler');
+        console.log(`error handler:: function name : ${params.func?.name}, isStatic: ${params.isStatic}`);
     }
 })
 
-
 @classDecorator({
     autoCatchMethods: true,
-    throw: true
+    chain: true
 })
 class SuperClass {
 
@@ -23,14 +21,13 @@ class SuperClass {
     }
 
     @methodDecorator({
-        throw: false,
+        // throw: false,
         handler() { console.log('methodDecorator handler'); }
     })
     static superStaticMethod() {
         console.log('superStaticMethod methodName', this.staticMethodName);
         throw new Error('superStaticMethod');
     }
-
 }
 
 
@@ -47,18 +44,18 @@ class SubClass extends SuperClass {
         throw new Error('superMethod');
     }
 
-
     static subStaticMethod() {
         console.log('superStaticMethod methodName', this.subStaticMethodName);
         throw new Error('superStaticMethod');
     }
 }
 
-
-// new SubClass().superMethod();
+const subClass = new SubClass();
+subClass.superMethod();
+// subClass.subMethod();
 
 try {
-    SubClass.superStaticMethod();
+    // SubClass.superStaticMethod();
     // SubClass.subStaticMethod();
 
 } catch (err: any) {

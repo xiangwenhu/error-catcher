@@ -1,6 +1,7 @@
-import { DEFAULT_CONFIG, SYMBOL_ORIGIN_FUNCTION } from "../const";
+import { DEFAULT_CONFIG, SYMBOL_ORIGIN_FUNCTION, SYMBOL_RELATED_CLASS } from "../const";
 import { CreateDecoratorOptions } from "../types";
 import { CatchConfig } from "../types/errorCatch";
+import { isFunction } from "../util";
 import { executeCall } from "./util";
 
 export function createMethodDecorator(
@@ -65,6 +66,14 @@ export function tryProxyMethod(
         configurable: false,
         get() {
             return method
+        }
+    })
+
+    const rClass = isFunction(thisObject) ? thisObject : thisObject.constructor;
+    Object.defineProperty(proxyMethod, SYMBOL_RELATED_CLASS, {
+        configurable: false,
+        get() {
+            return rClass
         }
     })
 

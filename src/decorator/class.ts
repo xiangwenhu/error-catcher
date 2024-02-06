@@ -36,11 +36,14 @@ function autoCatchMethods(
         dataStore.updateClassConfig(NewClass, config);
         // 静态方法
         Reflect.ownKeys(OriClass).filter(name => {
+            // 白名单检查
             const isInWhitelist = checkIsInWhitelist(name, whiteList);
             return !isInWhitelist && typeof OriClass[name] === 'function'
         }).forEach(name => {
             const method = OriClass[name] as Function;
+            // 监听调用和捕获异常
             tryProxyMethod(method, name, thisObject, creatorOptions, () => {
+                // 存储相关信息
                 dataStore.updateStaticMethodConfig(NewClass, method, { config: {
                     isStatic: true
                 } });
@@ -48,21 +51,23 @@ function autoCatchMethods(
         })
     });
 
-    // 实例方法
+    // 原型（非静态）方法
     function proxyInstanceMethods(instance: any, proto: any) {
         Reflect.ownKeys(proto).filter(name => {
+            // 白名单
             const isInWhitelist = checkIsInWhitelist(name, whiteList);
             return !isInWhitelist && typeof proto[name] === 'function'
         }).forEach(name => {
             const method = proto[name] as Function;
+            // 监听调用和捕获异常
             tryProxyMethod(method, name, instance, creatorOptions, () => {
+                //存储相关信息
                 dataStore.updateMethodConfig(NewClass, method, { config: {
                     isStatic: false
                 } });
             })
         })
     }
-
     return NewClass;
 }
 
@@ -82,7 +87,7 @@ export function createClassDecorator(creatorOptions: CreateDecoratorOptions) {
             // target: class
             // context: demo '{"kind":"class","name":"Class的Name"}'
 
-            // 自动捕获 实例方法  和 静态方法
+            // 自动捕获 非静态（原型）方法  和 静态方法
             if (!!config.autoCatchMethods) {
                 //  通过Class的继承监听构造函数，会返回新的 Class
                 const NewClass = autoCatchMethods(target, context, creatorOptions, config)
