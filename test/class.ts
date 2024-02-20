@@ -30,7 +30,7 @@ class TestClass {
     }
 
     async testMethod(data: any) {
-        console.log("this.name", this.name);
+        console.log("this.name", this.name, data);
         throw new Error("test error");
     }
 }

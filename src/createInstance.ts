@@ -92,19 +92,19 @@ export default function createInstance(config: CatchRootConfig = {}) {
          * @param method
          * @returns
          */
-        getMethodConfig(classOrInstance: Object | Function, method: Function) {
-            const oriFun = getProperty(method, SYMBOL_ORIGIN_FUNCTION);
-            if (!oriFun) {
-                throw new Error(`方法 ${method.name} 不是通过装饰器注册的方法`);
-            }
-            const mountConfig = dataStore.getMountConfigs(
-                classOrInstance,
-                oriFun
-            );
-            return {
-                ...mountConfig,
-                defaultConfig: options.defaults,
-            };
-        }
+        // getMethodConfig(classOrInstance: Object | Function, method: Function) {
+        //     const oriFun = getProperty(method, SYMBOL_ORIGIN_FUNCTION);
+        //     if (!oriFun) {
+        //         throw new Error(`方法 ${method.name} 不是通过装饰器注册的方法`);
+        //     }
+            // const mountConfig = dataStore.getMountConfigs(
+            //     classOrInstance,
+            //     oriFun
+            // );
+            // return {
+            //     ...mountConfig,
+            //     defaultConfig: options.defaults,
+            // };
+        // }
     };
 }

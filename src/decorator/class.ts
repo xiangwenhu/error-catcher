@@ -31,9 +31,8 @@ function autoCatchMethods(
     const whiteList = METHOD_WHITELIST.concat(... (config.whiteList || []))
 
     // 静态方法 代理， 代理的是原Class的方法，传递的thisObject是NewClass
-    const thisObject = NewClass;
     context.addInitializer(function () {
-        dataStore.updateClassConfig(NewClass, config);
+        dataStore.updateClassConfig(OriClass, config);
         // 静态方法
         Reflect.ownKeys(OriClass).filter(name => {
             // 白名单检查
@@ -42,11 +41,13 @@ function autoCatchMethods(
         }).forEach(name => {
             const method = OriClass[name] as Function;
             // 监听调用和捕获异常
-            tryProxyMethod(method, name, thisObject, creatorOptions, () => {
+            tryProxyMethod(method, name, OriClass, OriClass, NewClass, creatorOptions, () => {
                 // 存储相关信息
-                dataStore.updateStaticMethodConfig(NewClass, method, { config: {
-                    isStatic: true
-                } });
+                dataStore.updateStaticMethodConfig(OriClass, method, {
+                    config: {
+                        isStatic: true
+                    }
+                });
             })
         })
     });
@@ -60,11 +61,13 @@ function autoCatchMethods(
         }).forEach(name => {
             const method = proto[name] as Function;
             // 监听调用和捕获异常
-            tryProxyMethod(method, name, instance, creatorOptions, () => {
+            tryProxyMethod(method, name, proto, OriClass, instance, creatorOptions, () => {
                 //存储相关信息
-                dataStore.updateMethodConfig(NewClass, method, { config: {
-                    isStatic: false
-                } });
+                dataStore.updateMethodConfig(OriClass, method, {
+                    config: {
+                        isStatic: false
+                    }
+                });
             })
         })
     }

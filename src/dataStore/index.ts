@@ -20,30 +20,15 @@ export default class DataStore {
      * @param classOrInstance
      * @returns
      */
-    getMountConfigs(classOrInstance: Object | Function, method: Function) {
+    getMountConfigs(oriClass: Function, thisObject: Object | Function, method: Function) {
         // 如果instanceOrClass是class, 可以任务method是静态方法
         // 反之，是实例属性
-        const isClass = isFunction(classOrInstance);
+        const isClass = isFunction(thisObject);
 
         const { storeMap } = this;
-        let _class_: Function = isClass
-            ? (classOrInstance as Function)
-            : classOrInstance.constructor;
 
-        // SYMBOL_ORIGIN_FUNCTION
-        // TODO:: 继承之后的 非静态方法，classOrInstance 为 子类，而 method 信息在父类上
-        if (!isClass) {
-            for (let key of Reflect.ownKeys(classOrInstance)) {
-                // @ts-ignore
-                const val = classOrInstance[key];
-                if (isFunction(val) && val[SYMBOL_ORIGIN_FUNCTION] === method) {
-                    _class_ = val[SYMBOL_RELATED_CLASS];
-                    break;
-                }
-            }
-        }
 
-        const rootConfig: StorageMapValue = storeMap.get(_class_) || {};
+        const rootConfig: StorageMapValue = storeMap.get(oriClass) || {};
 
         // 挂载class身上的config
         const classConfig = rootConfig.classConfig || {};
@@ -54,7 +39,7 @@ export default class DataStore {
                 new Map<Function, StorageMapValue.MethodConfigValue>()).get(method) || {};
 
         // 实例或者class config 属性对应着的config
-        const propertyConfig = getProperty(classOrInstance, "config", {}) || {};
+        const propertyConfig = getProperty(thisObject, "config", {}) || {};
 
         // fieldConfig
         let propertyMap: StorageMapValue.FieldPropertyMapValue;
@@ -65,7 +50,7 @@ export default class DataStore {
             const instancesMap = rootConfig.instances || new Map<Object, StorageMapValue.CommonConfigValue>();
             // 从示例map中查找示例对应的配置
             const commonConfig: StorageMapValue.CommonConfigValue =
-                instancesMap.get(classOrInstance) || {};
+                instancesMap.get(thisObject) || {};
 
             // 字段属性映射, 如果木有，会从原型上找
             propertyMap = commonConfig.fieldPropertyMap || {};
@@ -98,10 +83,10 @@ export default class DataStore {
      * @returns
      */
     getMethodMergedConfig(
-        instanceOrClass: Object,
+        thisObject: Object,
+        oriClass: Function,
         method: Function,
         defaultConfig: StorageMapValue.ConfigValue = {},
-        argumentsObj: any
     ) {
         if (
             !isObject(method) &&
@@ -112,7 +97,7 @@ export default class DataStore {
                 "methodFunction must be a/an Object|Function|AsyncFunction"
             );
         }
-        const mountConfigs = this.getMountConfigs(instanceOrClass, method);
+        const mountConfigs = this.getMountConfigs(oriClass, thisObject, method);
 
         let mConfig: StorageMapValue.ConfigValue = merge([
             {},
@@ -129,12 +114,6 @@ export default class DataStore {
         ]);
 
 
-        mConfig = this.adjustConfig(
-            mConfig,
-            argumentsObj,
-            mountConfigs.methodConfig
-        );
-
         const errorHandlers: Function[] = [defaultConfig,
             mountConfigs.classConfig,
             mountConfigs.methodConfig.config || {}
@@ -150,33 +129,6 @@ export default class DataStore {
         };
     }
 
-
-    /**
-     * 根据参数，最后调整参数
-     * @param mergedConfig 被合并后的参数
-     * @param argumentsObj 方法的实参
-     * @param methodConfig 方法自身的config
-     * @returns
-     */
-    private adjustConfig(
-        mergedConfig: StorageMapValue.ConfigValue,
-        argumentsObj: any,
-        methodConfig: StorageMapValue.MethodConfigValue
-    ): StorageMapValue.ConfigValue {
-
-        const {
-            hasBody,
-            hasConfig: hasExtraConfig,
-            hasParams,
-            hasPath,
-        } = {
-            hasBody: hasOwnProperty(argumentsObj, "data"),
-            hasParams: hasOwnProperty(argumentsObj, "params"),
-            hasConfig: hasOwnProperty(argumentsObj, "config"),
-            hasPath: hasOwnProperty(argumentsObj, "path"),
-        };
-        return mergedConfig;
-    }
 
     /**
      * 更新属性映射的配置

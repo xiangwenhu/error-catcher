@@ -12,20 +12,16 @@ setConfig({
 })
 class SuperClass {
 
-    private methodName = 'methodName';
-    static staticMethodName = 'staticMethodName';
+    private superMethodName = 'superMethodName';
+    static superStaticMethodName = 'staticMethodName';
 
     superMethod() {
-        console.log('superMethod methodName', this.methodName);
+        console.log('superMethod superMethodName', this.superMethodName);
         throw new Error('superMethod');
     }
 
-    @methodDecorator({
-        // throw: false,
-        handler() { console.log('methodDecorator handler'); }
-    })
     static superStaticMethod() {
-        console.log('superStaticMethod methodName', this.staticMethodName);
+        console.log('superStaticMethod superStaticMethodName', this.superStaticMethodName);
         throw new Error('superStaticMethod');
     }
 }
@@ -36,27 +32,27 @@ class SuperClass {
 })
 class SubClass extends SuperClass {
 
-    private subMethodName = 'methodName';
-    static subStaticMethodName = 'staticMethodName';
+    private subMethodName = 'subMethodName';
+    static subStaticMethodName = 'subStaticMethodName';
 
     subMethod() {
-        console.log('superMethod methodName', this.subMethodName);
+        console.log('subMethod subMethodName', this.subMethodName);
         throw new Error('superMethod');
     }
 
     static subStaticMethod() {
-        console.log('superStaticMethod methodName', this.subStaticMethodName);
+        console.log('subStaticMethod methodName', this.subStaticMethodName);
         throw new Error('superStaticMethod');
     }
 }
 
 const subClass = new SubClass();
 subClass.superMethod();
-// subClass.subMethod();
+subClass.subMethod();
 
 try {
-    // SubClass.superStaticMethod();
-    // SubClass.subStaticMethod();
+    SubClass.superStaticMethod();
+    SubClass.subStaticMethod();
 
 } catch (err: any) {
     console.log('SubClass.superStaticMethod: error', err && err.message);
