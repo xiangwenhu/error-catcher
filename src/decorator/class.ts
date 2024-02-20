@@ -31,41 +31,50 @@ function autoCatchMethods(
     const whiteList = METHOD_WHITELIST.concat(... (config.whiteList || []))
 
     // 静态方法 代理， 代理的是原Class的方法，传递的thisObject是NewClass
-    const thisObject = NewClass;
     context.addInitializer(function () {
-        dataStore.updateClassConfig(NewClass, config);
+        dataStore.updateClassConfig(OriClass, config);
         // 静态方法
         Reflect.ownKeys(OriClass).filter(name => {
+            // 白名单检查
             const isInWhitelist = checkIsInWhitelist(name, whiteList);
             return !isInWhitelist && typeof OriClass[name] === 'function'
         }).forEach(name => {
             const method = OriClass[name] as Function;
-            tryProxyMethod(method, name, thisObject, creatorOptions, () => {
-                dataStore.updateStaticMethodConfig(NewClass, method, { config: {} });
+            // 监听调用和捕获异常
+            tryProxyMethod(method, name, OriClass, OriClass, NewClass, creatorOptions, () => {
+                // 存储相关信息
+                dataStore.updateStaticMethodConfig(OriClass, method, {
+                    config: {
+                        isStatic: true
+                    }
+                });
             })
         })
     });
 
-    // 实例方法
+    // 原型（非静态）方法
     function proxyInstanceMethods(instance: any, proto: any) {
         Reflect.ownKeys(proto).filter(name => {
+            // 白名单
             const isInWhitelist = checkIsInWhitelist(name, whiteList);
             return !isInWhitelist && typeof proto[name] === 'function'
         }).forEach(name => {
             const method = proto[name] as Function;
-            tryProxyMethod(method, name, instance, creatorOptions, () => {
-                dataStore.updateStaticMethodConfig(instance, method, { config: {} });
+            // 监听调用和捕获异常
+            tryProxyMethod(method, name, proto, OriClass, instance, creatorOptions, () => {
+                //存储相关信息
+                dataStore.updateMethodConfig(OriClass, method, {
+                    config: {
+                        isStatic: false
+                    }
+                });
             })
         })
     }
-
     return NewClass;
 }
 
 export function createClassDecorator(creatorOptions: CreateDecoratorOptions) {
-    /**
-     * 示例
-     */
     return function classDecorator(config: ClassCatchConfig = DEFAULT_CONFIG): any {
         return function (
             target: Function,
@@ -81,7 +90,7 @@ export function createClassDecorator(creatorOptions: CreateDecoratorOptions) {
             // target: class
             // context: demo '{"kind":"class","name":"Class的Name"}'
 
-            // 自动捕获 实例方法  和 静态方法
+            // 自动捕获 非静态（原型）方法  和 静态方法
             if (!!config.autoCatchMethods) {
                 //  通过Class的继承监听构造函数，会返回新的 Class
                 const NewClass = autoCatchMethods(target, context, creatorOptions, config)

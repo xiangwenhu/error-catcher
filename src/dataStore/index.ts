@@ -1,3 +1,4 @@
+import { SYMBOL_ORIGIN_FUNCTION, SYMBOL_RELATED_CLASS } from "../const";
 import { merge } from "../lib/merge";
 import { StorageMap, StorageMapValue } from "../types";
 import { CatchConfig } from "../types/errorCatch";
@@ -19,38 +20,37 @@ export default class DataStore {
      * @param classOrInstance
      * @returns
      */
-    getMountConfigs(classOrInstance: Object | Function, method: Function) {
+    getMountConfigs(oriClass: Function, thisObject: Object | Function, method: Function) {
         // 如果instanceOrClass是class, 可以任务method是静态方法
         // 反之，是实例属性
-        const isStatic = isFunction(classOrInstance);
+        const isClass = isFunction(thisObject);
 
         const { storeMap } = this;
-        const _class_: Function = isStatic
-            ? (classOrInstance as Function)
-            : classOrInstance.constructor;
-        const rootConfig: StorageMapValue = storeMap.get(_class_) || {};
+
+
+        const rootConfig: StorageMapValue = storeMap.get(oriClass) || {};
 
         // 挂载class身上的config
         const classConfig = rootConfig.classConfig || {};
 
         // 方法上的config
         const methodConfig =
-            ((isStatic ? rootConfig.staticMethods : rootConfig.methods) ||
+            ((isClass ? rootConfig.staticMethods : rootConfig.methods) ||
                 new Map<Function, StorageMapValue.MethodConfigValue>()).get(method) || {};
 
         // 实例或者class config 属性对应着的config
-        const propertyConfig = getProperty(classOrInstance, "config", {}) || {};
+        const propertyConfig = getProperty(thisObject, "config", {}) || {};
 
         // fieldConfig
         let propertyMap: StorageMapValue.FieldPropertyMapValue;
-        if (isStatic) {
+        if (isClass) {
             const commonConfig = rootConfig.staticConfig || {};
             propertyMap = commonConfig.fieldPropertyMap || {};
         } else {
             const instancesMap = rootConfig.instances || new Map<Object, StorageMapValue.CommonConfigValue>();
             // 从示例map中查找示例对应的配置
             const commonConfig: StorageMapValue.CommonConfigValue =
-                instancesMap.get(classOrInstance) || {};
+                instancesMap.get(thisObject) || {};
 
             // 字段属性映射, 如果木有，会从原型上找
             propertyMap = commonConfig.fieldPropertyMap || {};
@@ -83,10 +83,10 @@ export default class DataStore {
      * @returns
      */
     getMethodMergedConfig(
-        instanceOrClass: Object,
+        thisObject: Object,
+        oriClass: Function,
         method: Function,
-        defaultConfig: CatchConfig = {},
-        argumentsObj: any
+        defaultConfig: StorageMapValue.ConfigValue = {},
     ) {
         if (
             !isObject(method) &&
@@ -97,9 +97,9 @@ export default class DataStore {
                 "methodFunction must be a/an Object|Function|AsyncFunction"
             );
         }
-        const mountConfigs = this.getMountConfigs(instanceOrClass, method);
+        const mountConfigs = this.getMountConfigs(oriClass, thisObject, method);
 
-        let mConfig: CatchConfig = merge([
+        let mConfig: StorageMapValue.ConfigValue = merge([
             {},
             // 自定义默认config
             defaultConfig,
@@ -113,41 +113,22 @@ export default class DataStore {
             mountConfigs.methodConfig.config || {},
         ]);
 
-        mConfig = this.adjustConfig(
-            mConfig,
-            argumentsObj,
-            mountConfigs.methodConfig
-        );
-        return mConfig;
-    }
 
+        const errorHandlers: Function[] = [defaultConfig,
+            mountConfigs.classConfig,
+            mountConfigs.methodConfig.config || {}
+        ].reverse().map(c => {
+            if (!c) return undefined;
+            if (typeof c.handler === 'function') return c.handler;
+            return undefined;
+        }).filter(Boolean) as Function[]
 
-    /**
-     * 根据参数，最后调整参数
-     * @param mergedConfig 被合并后的参数
-     * @param argumentsObj 方法的实参
-     * @param methodConfig 方法自身的config
-     * @returns
-     */
-    private adjustConfig(
-        mergedConfig: CatchConfig,
-        argumentsObj: any,
-        methodConfig: StorageMapValue.MethodConfigValue
-    ): CatchConfig {
-
-        const {
-            hasBody,
-            hasConfig: hasExtraConfig,
-            hasParams,
-            hasPath,
-        } = {
-            hasBody: hasOwnProperty(argumentsObj, "data"),
-            hasParams: hasOwnProperty(argumentsObj, "params"),
-            hasConfig: hasOwnProperty(argumentsObj, "config"),
-            hasPath: hasOwnProperty(argumentsObj, "path"),
+        return {
+            config: mConfig,
+            errorHandlers
         };
-        return mergedConfig;
     }
+
 
     /**
      * 更新属性映射的配置
@@ -215,7 +196,7 @@ export default class DataStore {
         method: Function,
         config: StorageMapValue.MethodConfigValue
     ) {
-        this.innerUpdateStaticMethodConfig(_class_, method, config, "methods");
+        this.innerUpdateMethodConfig(_class_, method, config, "methods");
     }
 
     /**
@@ -229,7 +210,7 @@ export default class DataStore {
         method: Function,
         config: StorageMapValue.MethodConfigValue
     ) {
-        this.innerUpdateStaticMethodConfig(
+        this.innerUpdateMethodConfig(
             _class_,
             method,
             config,
@@ -237,7 +218,7 @@ export default class DataStore {
         );
     }
 
-    private innerUpdateStaticMethodConfig(
+    private innerUpdateMethodConfig(
         _class_: Function,
         method: Function,
         config: StorageMapValue.MethodConfigValue,

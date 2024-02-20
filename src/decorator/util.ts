@@ -1,5 +1,7 @@
-import { CatchConfig, ClassCatchConfig } from "../types/errorCatch";
+import { StorageMapValue } from "../types";
+import { CatchConfig, ClassCatchConfig, ErrorHandlerParams } from "../types/errorCatch";
 import Logger from "../types/logger";
+import { isThenable } from "../util";
 import isAsyncFunction from "../util/isAsyncFunction";
 
 export function executeCall({
@@ -8,16 +10,18 @@ export function executeCall({
     logger,
     args,
     thisObject,
+    errorHandlers
 }: {
     method: Function;
-    config: CatchConfig | ClassCatchConfig;
+    config: StorageMapValue.ConfigValue;
     logger: Logger;
     args: IArguments | any[];
     thisObject: any;
+    errorHandlers: ((params: ErrorHandlerParams) => any)[];
 }) {
 
     const errorHandler = (error: any) => {
-        config.handler && config.handler({
+        const params = {
             error,
             func: method,
             params: args,
@@ -25,9 +29,24 @@ export function executeCall({
             extra: config.extra,
             ctx: config.ctx,
             throw: config.throw,
-            whiteList: (config as ClassCatchConfig).whiteList
-        });
-        if (!!config.throw) {
+            whiteList: (config as ClassCatchConfig).whiteList,
+            isStatic: config.isStatic
+        }
+
+        for (let i = 0; i < errorHandlers.length; i++) {
+            try {
+                const handler = errorHandlers[i];
+                const isContinue = handler.call(thisObject, params);
+                if (!config.chain || isContinue === false) {
+                    break;
+                }
+            } catch (err) {
+                logger.error("errorHandler error", err);
+            }
+        }
+
+        // 捕获之后，还继续外抛
+        if (config.throw) {
             throw error
         }
     }
@@ -36,7 +55,14 @@ export function executeCall({
         return method.apply(thisObject, args).catch(errorHandler)
     } else {
         try {
-            return method.apply(thisObject, args)
+            // 先调用函数， 如果直接被后面的catch了，是普通函数
+            const result = method.apply(thisObject, args);
+            // 返回的结果如果是 isThenable ，就是异步函数
+            const isThenableResult = isThenable(result)
+            if (isThenableResult) {
+                return result.catch(errorHandler)
+            }
+            return result;
         } catch (err) {
             errorHandler(err)
         }

@@ -32,16 +32,26 @@ export interface ErrorHandlerParams<E = any, C = any, P = any[]> {
      * 白名单，装饰class的时候可配置
      */
     whiteList?: (PropertyKey | RegExp)[];
+    /**
+     * 是不是静态方法
+     */
+    isStatic?: boolean;
+
+    chain?: boolean;
 }
 
 export interface CatchConfig {
     // filter?: (params: Pick<ErrorHandlerParams, "ctx" | "params" | "func" | 'whiteList'>) => boolean;
     message?: string | ((params: ErrorHandlerParams) => string);
     throw?: boolean;
-    handler?: (params: ErrorHandlerParams) => void;
+    handler?: (params: ErrorHandlerParams) => unknown
     businessType?: string;
     extra?: any;
     ctx?: any;
+    /**
+     * 链式调用
+     */
+    chain?: boolean;
 }
 
 
